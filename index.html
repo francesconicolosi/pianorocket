@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Piano Rocket – impara il pianoforte giocando</title>
+<meta name="description" content="Gioco web per bambini che insegna il pianoforte: segui i tasti illuminati, fai decollare il razzo o salta tra le piattaforme. Funziona con ROLI Piano M via Web MIDI.">
+<meta name="theme-color" content="#070b1f">
+<meta property="og:title" content="Piano Rocket">
+<meta property="og:description" content="Impara il pianoforte giocando: razzi, salti e tasti che si illuminano.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://francesconicolosi.github.io/pianorocket/">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="app">
+  <div class="bar">
+    <div class="logo">🚀 <span>Piano Rocket</span></div>
+    <select id="songSel" aria-label="Livello / melodia"></select>
+    <div class="seg" id="modeSeg" role="group" aria-label="Mondo">
+      <button type="button" data-v="rocket">🚀 Spazio</button>
+      <button type="button" data-v="platform">🏃 Salti</button>
+    </div>
+    <div class="seg" id="playSeg" role="group" aria-label="Stile di gioco">
+      <button type="button" data-v="wait" title="Il gioco aspetta la nota giusta">⏸ Con calma</button>
+      <button type="button" data-v="tempo" title="La musica va avanti: premi al momento giusto">⏱ A tempo</button>
+    </div>
+    <select id="bpmSel" aria-label="Velocità">
+      <option value="60">🐢 Lento</option>
+      <option value="80">🚶 Medio</option>
+      <option value="100">🐇 Veloce</option>
+    </select>
+    <button id="playersBtn" type="button" class="icon" title="Giocatori e personaggi">👥 <span id="npLabel">1P</span></button>
+    <label class="vol" title="Volume">🔊<input id="vol" type="range" min="0" max="100" aria-label="Volume"></label>
+    <button id="midiBtn" type="button" class="icon" title="Collega Piano M"><span class="dot" id="dot"></span></button>
+    <button id="setBtn" type="button" class="icon" title="Impostazioni">⚙️</button>
+    <button id="fsBtn" type="button" class="icon" title="Schermo intero">⛶</button>
+    <button id="retryBtn" type="button" class="icon hide" title="Rigioca questo livello">↺</button>
+    <button id="startBtn" type="button" class="play">▶ Gioca</button>
+  </div>
+
+  <div class="stage" id="stage">
+    <canvas id="cv"></canvas>
+
+    <div class="panel" id="playersPanel">
+      <h3>👥 Giocatori
+        <span class="seg" id="npSeg"><button type="button" data-v="1">1 giocatore</button><button type="button" data-v="2">2 giocatori</button></span>
+        <button type="button" class="close" data-close="playersPanel">✓ Fatto</button></h3>
+      <div class="hint">In 2 giocatori si gioca a turno sulla stessa melodia: vince chi fa più punti. Lo stesso personaggio può essere scelto da entrambi.</div>
+      <div class="pcards" id="pcards"></div>
+    </div>
+
+    <div class="panel" id="sheet">
+      <h3>⚙️ Impostazioni <button type="button" class="close" data-close="sheet">✓ Fatto</button></h3>
+      <div class="row">
+        <label class="field">Accensione tasto (A tempo)
+          <select id="leadSel">
+            <option value="0">Al momento esatto</option>
+            <option value="0.15">Pochissimo prima (0,15 s)</option>
+            <option value="0.3">Poco prima (0,3 s)</option>
+            <option value="0.6">Prima (0,6 s)</option>
+            <option value="1">Molto prima (1 s)</option>
+            <option value="-1">Appena finita la nota precedente</option>
+          </select>
+        </label>
+        <label class="field">Tastiera
+          <select id="kbSize"><option value="24">🎹 24 tasti (1 Piano M)</option><option value="48">🎹🎹 48 tasti (2 Piano M)</option></select>
+        </label>
+        <label class="field">Ottava Piano M
+          <select id="octSel"><option value="-12">−1</option><option value="0">0</option><option value="12">+1</option></select>
+          <span class="hint" id="rangeHint"></span>
+        </label>
+        <label class="field">Uscita luci
+          <select id="lightOut"><option value="">— nessuna —</option></select>
+        </label>
+        <label class="field">Nomi sui tasti
+          <select id="names"><option value="1">Mostra</option><option value="0">Nascondi</option></select>
+        </label>
+        <label class="field">Suono
+          <select id="soundSel"><option value="piano">🎹 Pianoforte</option><option value="synth">🎹 Pianoforte (offline)</option><option value="toy">🔔 Giocattolo</option></select>
+          <span class="hint" id="soundStatus"></span>
+        </label>
+        <label class="field">Metronomo (a tempo)
+          <select id="metro"><option value="1">Acceso</option><option value="0">Spento</option></select>
+        </label>
+        <div class="field">Luci<button id="testLights" type="button">Test luci</button></div>
+        <div class="field grow">Nuova melodia
+          <input id="songName" type="text" placeholder="Nome">
+          <textarea id="songNotes" placeholder="C4 D4 E4 C4 G4:2 …"></textarea>
+          <div><button id="saveSong" type="button">💾 Salva</button> <span class="hint">Note separate da spazi, diesis con # (F#4). Durata dopo i due punti: C4:2 = 2 tempi, C4:0.5 = mezzo tempo</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="kbwrap"><div id="kb"></div></div>
+</div>
+
+
+<noscript><p style="padding:20px">Piano Rocket ha bisogno di JavaScript attivo.</p></noscript>
+<script src="js/songs.js"></script>
+<script src="js/core.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/keyboard.js"></script>
+<script src="js/midi.js"></script>
+<script src="js/characters.js"></script>
+<script src="js/players.js"></script>
+<script src="js/game.js"></script>
+<script src="js/render.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
